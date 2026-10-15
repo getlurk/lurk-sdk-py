@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "getlurk"
+version = "0.2.1"
+description = "The Lurk API for Python"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+license = { text = "Apache-2.0" }
+license-files = ["LICENSE", "NOTICE"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/getlurk"]
+
+[project.urls]
+Homepage = "https://github.com/getlurk/lurk-sdk-py"
+Source = "https://github.com/getlurk/lurk-sdk-py"
+Issues = "https://github.com/getlurk/lurk-sdk-py/issues"
