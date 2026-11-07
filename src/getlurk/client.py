@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import http.client
 import json
 import os
 import random
@@ -17,7 +18,7 @@ from ._generated.resources import Resources
 from .errors import LurkConnectionError, LurkError
 from .options import RequestOptions
 
-SDK_VERSION = "0.2.1"
+SDK_VERSION = "0.3.0"
 DEFAULT_BASE_URL = "https://api.getlurk.com"
 # If the API asks for a longer wait than this, the call fails with ``rate_limited`` instead of hanging.
 MAX_RETRY_AFTER_SECONDS = 60.0
@@ -34,17 +35,32 @@ class Response(NamedTuple):
 Transport = Callable[[str, str, Mapping[str, str], Optional[bytes], float], Response]
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """API calls return redirects as errors without sending credentials to another destination."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
 def urllib_transport(
     method: str, url: str, headers: Mapping[str, str], body: Optional[bytes], timeout: float
 ) -> Response:
     request = urllib.request.Request(url, data=body, method=method, headers=dict(headers))
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 (https URLs only, from the client's base_url)
+        with urllib.request.build_opener(_NoRedirect()).open(request, timeout=timeout) as response:
             return Response(response.status, {k.lower(): v for k, v in response.headers.items()}, response.read())
     except urllib.error.HTTPError as error:
-        return Response(error.code, {k.lower(): v for k, v in error.headers.items()}, error.read())
+        # An error answer whose body is cut short still has its status, which is what the retry rules read.
+        try:
+            error_body = error.read()
+        except http.client.HTTPException:
+            error_body = b""
+        return Response(error.code, {k.lower(): v for k, v in error.headers.items()}, error_body)
     except urllib.error.URLError as error:
         raise OSError(str(error.reason)) from error
+    except http.client.HTTPException as error:
+        # A body cut short (IncompleteRead) or a garbled answer is no complete answer: the same as a dropped connection.
+        raise OSError(f"The response was interrupted: {error!r}") from error
 
 
 def _backoff(attempt: int) -> float:

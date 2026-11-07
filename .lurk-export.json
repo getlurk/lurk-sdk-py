@@ -1,7 +1,7 @@
 {
   "sdk": "python",
-  "version": "0.2.1",
-  "commit": "7123eed7548955503c2afe1e8ebd97b9da6fb263",
+  "version": "0.3.0",
+  "commit": "4bae05f3f6fc886f75e5a6e1f7ba9ac5f1730ef8",
   "files": [
     {
       "path": ".github/CODEOWNERS",
@@ -41,7 +41,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "7cd19a7bda0d00c3378c73adf9f33cc0e05fc2b5c6843229af6b235231cf9f74"
+      "sha256": "bedcaedd140603ab06123b592c007718055adff74f18df758fe8546c6169cbfd"
     },
     {
       "path": "SECURITY.md",
@@ -57,7 +57,7 @@
     },
     {
       "path": "pyproject.toml",
-      "sha256": "1389f77fb8aeb8148368736fae4ab6e0fc458ff9b8d05c89e99f9c51fd21cb09"
+      "sha256": "ca6d220601cdebd198614d973016ceabbafef1a05660343d0caa0af968289cb1"
     },
     {
       "path": "src/getlurk/__init__.py",
@@ -69,19 +69,19 @@
     },
     {
       "path": "src/getlurk/_generated/operations.py",
-      "sha256": "fab6aeab7465f03f1610f9c63adeddd8126c16db1ccead712827c16d45850c57"
+      "sha256": "0b75cbfeeb9e9ae6b69f9b104cb01c17651d1f6c291b694ecb9790d2f5313b4e"
     },
     {
       "path": "src/getlurk/_generated/resources.py",
-      "sha256": "2d547bb8ec60d43bc5e618892edceb1363db9d1999b655b526100eb39ed2f9b2"
+      "sha256": "845aaf7cf977e0b449a159a23a7cf8763d8f28b816a7d1f6b0608bcaac126b21"
     },
     {
       "path": "src/getlurk/_generated/schema.py",
-      "sha256": "111ec45d8f4b7db999a5a01ed7cdc7af56265db59bc09023e2c46312bd05b45e"
+      "sha256": "e81aaf7dd3842a7aac599d8b243303474d11e07be3f3eb58040773de3d172d39"
     },
     {
       "path": "src/getlurk/_generated/types.py",
-      "sha256": "d3f75cfcc2e10e1ef1205cfb9051e8abb4a7c45bb89cb07d89f7ee201aa8a877"
+      "sha256": "8533b0a6a5df4c1f137ecb49865cdd916594bd419352359fd98df9bca8e3deb4"
     },
     {
       "path": "src/getlurk/aio.py",
@@ -89,7 +89,7 @@
     },
     {
       "path": "src/getlurk/client.py",
-      "sha256": "6148c22eef8effac727df20567cf3cf71943beca7460e4de147ed870c181cec5"
+      "sha256": "bd57f18e51dc83f24d59d12b9c5773c8175141bec897871bf134afa409c80bf6"
     },
     {
       "path": "src/getlurk/errors.py",
@@ -118,6 +118,14 @@
     {
       "path": "tests/test_client.py",
       "sha256": "ac3e55d6fecbdd673f85ece4cb2837818bb5629033da7acc0f69939725560cd9"
+    },
+    {
+      "path": "tests/test_interrupted_body.py",
+      "sha256": "e0c28d0a911f32812f358ce82633b5683c7c5814bab528365a2455d883d7a35f"
+    },
+    {
+      "path": "tests/test_redirects.py",
+      "sha256": "dcc209087b61ef2ea04d56b9a81f6b178ef38ddf7faff8db8f01829e0c3d146c"
     },
     {
       "path": "tests/test_webhooks.py",

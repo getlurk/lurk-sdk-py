@@ -11,7 +11,7 @@ ActivityCheck = TypedDict(
     "ActivityCheck",
     {
     "rule": Required[str],
-    "check": Required[Literal["when", "audience", "time", "property", "balance", "limit", "action", "unit", "hold", "budget", "amount", "streak", "modifier"]],
+    "check": Required[Literal["when", "audience", "time", "property", "balance", "source", "limit", "action", "unit", "hold", "budget", "amount", "streak", "modifier", "effect"]],
     "ok": Required[bool],
     "detail": Required[str],
     },
@@ -24,7 +24,7 @@ ActivityItem = TypedDict(
     "at": Required[str],
     "user": Required["ActivityItemUser"],
     "by": Required[str],
-    "via": Required[Literal["api", "agent", "lurky", "dashboard", "system"]],
+    "via": Required[Literal["api", "agent", "lurky", "dashboard", "system", "chat", "device"]],
     "agent": Required[Union[str, None]],
     "event": Required[Union["ActivityItemEvent", None]],
     "lines": Required[List["ActivityLine"]],
@@ -84,6 +84,7 @@ AgentKey = TypedDict(
     "kind": Required[Literal["agent"]],
     "prefix": Required[str],
     "created_at": Required[str],
+    "created_by": NotRequired[Union["AgentKeyCreatedBy", None]],
     "last_used_at": Required[Union[str, None]],
     "revoked_at": Required[Union[str, None]],
     },
@@ -115,6 +116,7 @@ ApiKey = TypedDict(
     "kind": Required[Literal["secret"]],
     "prefix": Required[str],
     "created_at": Required[str],
+    "created_by": NotRequired[Union["ApiKeyCreatedBy", None]],
     "last_used_at": Required[Union[str, None]],
     "expires_at": Required[Union[str, None]],
     "revoked_at": Required[Union[str, None]],
@@ -144,6 +146,8 @@ Audience = TypedDict(
     "kind": Required["AudienceKind"],
     "conditions": Required[List["AudienceCondition"]],
     "summary": Required[str],
+    "status": Required["AudienceStatus"],
+    "problems": Required[List["AudienceProblem"]],
     "users": Required[int],
     "refreshed_at": Required[Union[str, None]],
     "used_by": Required[List["AudienceReader"]],
@@ -151,7 +155,7 @@ Audience = TypedDict(
     },
 )
 
-AudienceCondition = Union["AudienceCondition1", "AudienceCondition2", "AudienceCondition3", "AudienceCondition4", "AudienceCondition5"]
+AudienceCondition = Union["AudienceCondition1", "AudienceCondition2", "AudienceCondition3", "AudienceCondition4", "AudienceCondition5", "AudienceCondition6", "AudienceCondition7", "AudienceCondition8", "AudienceCondition9", "AudienceCondition10", "AudienceCondition11"]
 
 AudienceKind = Literal["list", "condition"]
 
@@ -164,6 +168,15 @@ AudienceList = TypedDict(
     },
 )
 
+AudienceProblem = TypedDict(
+    "AudienceProblem",
+    {
+    "condition": Required[int],
+    "code": Required[Literal["community_removed", "role_gone", "group_gone", "tag_gone", "not_synced"]],
+    "message": Required[str],
+    },
+)
+
 AudienceReader = TypedDict(
     "AudienceReader",
     {
@@ -171,6 +184,17 @@ AudienceReader = TypedDict(
     "id": Required[str],
     "name": Required[str],
     "status": Required[Literal["draft", "live", "paused", None]],
+    },
+)
+
+AudienceStatus = Literal["ok", "broken", "not_synced"]
+
+BlockState = TypedDict(
+    "BlockState",
+    {
+    "user": Required[str],
+    "blocked_at": Required[Union[str, None]],
+    "blocked_by": Required["MemberRef"],
     },
 )
 
@@ -224,14 +248,202 @@ CatalogEvent = TypedDict(
     "CatalogEvent",
     {
     "event": Required[str],
+    "kind": Required[Literal["own", "lurk"]],
+    "title": Required[Union[str, None]],
+    "description": Required[Union[str, None]],
+    "platforms": Required[List[Literal["discord", "slack", "telegram"]]],
     "count_30d": Required[int],
     "last_seen_at": Required[Union[str, None]],
     "properties": Required[List[str]],
+    "property_types": Required[Dict[str, "CatalogPropertyType"]],
+    "value_sources": Required[Dict[str, "PropertyValueSource"]],
+    "known_values": Required[Dict[str, "KnownValues"]],
     "rules": Required[List["CatalogEventRulesItem"]],
     },
 )
 
-Condition = Union["Condition1", "Condition2", "Condition3", "Condition4"]
+CatalogPropertyType = Literal["string", "number", "boolean", "list", "null"]
+
+ChatDirectory = TypedDict(
+    "ChatDirectory",
+    {
+    "installation": Required[str],
+    "connector": Required[str],
+    "type": Required["ChatDirectoryType"],
+    "status": Required[Literal["listed", "unavailable"]],
+    "reason": Required[Literal["not_set_up", "no_access", "not_found", "rate_limited", "platform_error", "not_listable", "plan_missing", None]],
+    "sentence": Required[Union[str, None]],
+    "entries": Required[List["ChatDirectoryEntry"]],
+    },
+)
+
+ChatDirectoryEntry = TypedDict(
+    "ChatDirectoryEntry",
+    {
+    "id": Required[str],
+    "name": Required[str],
+    "type": Required["ChatDirectoryType"],
+    "kind": Required[Literal["text", "announcement", "voice", "forum", "other", "role", "group"]],
+    "can_post": Required[Union[bool, None]],
+    "can_give": NotRequired[Union[bool, None]],
+    "note": NotRequired[Union[str, None]],
+    },
+)
+
+ChatDirectoryType = Literal["channel", "role", "group"]
+
+ChatListening = TypedDict(
+    "ChatListening",
+    {
+    "kinds": Required[List["ChatSignalKind"]],
+    "channels_only": Required[List[str]],
+    "channels_except": Required[List[str]],
+    "daily_new_people": Required[int],
+    "count_external": Required[bool],
+    },
+)
+
+ChatMirror = TypedDict(
+    "ChatMirror",
+    {
+    "id": Required[str],
+    "installation": Required[str],
+    "connector": Required[str],
+    "unit": Required[str],
+    "threshold": Required[int],
+    "target": Required["ChatMirrorTarget"],
+    "status": Required["ChatMirrorStatus"],
+    "summary": Required[str],
+    "problem": Required[Union["ChatMirrorProblem", None]],
+    "last_run_at": Required[Union[str, None]],
+    "counts": Required[Union["ChatMirrorCounts", None]],
+    "created_at": Required[str],
+    "updated_at": Required[str],
+    },
+)
+
+ChatMirrorList = TypedDict(
+    "ChatMirrorList",
+    {
+    "data": Required[List["ChatMirror"]],
+    "has_more": Required[bool],
+    "next_cursor": Required[Union[str, None]],
+    },
+)
+
+ChatMirrorPreview = TypedDict(
+    "ChatMirrorPreview",
+    {
+    "installation": Required[str],
+    "unit": Required[str],
+    "threshold": Required[int],
+    "wanted": Required[int],
+    "would_give": Required[int],
+    "already_have": Required[int],
+    "state_unknown": Required[int],
+    "would_take_back": Required[int],
+    "unknown_holders": Required[int],
+    "without_account": Required[int],
+    "sentence": Required[str],
+    },
+)
+
+ChatMirrorStatus = Literal["draft", "live", "paused"]
+
+ChatSettings = TypedDict(
+    "ChatSettings",
+    {
+    "installation": Required[str],
+    "connector": Required[str],
+    "workspace_name": Required[Union[str, None]],
+    "listening": Required["ChatListening"],
+    "switches": Required[List["ChatSwitch"]],
+    },
+)
+
+ChatSettingsChange = TypedDict(
+    "ChatSettingsChange",
+    {
+    "kinds": NotRequired[List["ChatSignalKind"]],
+    "channels_only": NotRequired[List[str]],
+    "channels_except": NotRequired[List[str]],
+    "daily_new_people": NotRequired[int],
+    "count_external": NotRequired[bool],
+    },
+)
+
+ChatSignalKind = Literal["message", "reaction", "voice", "join", "leave"]
+
+ChatSwitch = TypedDict(
+    "ChatSwitch",
+    {
+    "key": Required[str],
+    "title": Required[str],
+    "counts": Required[str],
+    "kinds": Required[List["ChatSignalKind"]],
+    "on": Required[bool],
+    "events": Required[List[str]],
+    "heard": Required[bool],
+    },
+)
+
+ClaimIdentityLinkInput = TypedDict(
+    "ClaimIdentityLinkInput",
+    {
+    "code": Required[str],
+    "user": Required[str],
+    },
+)
+
+ClaimIdentityLinkOutput = TypedDict(
+    "ClaimIdentityLinkOutput",
+    {
+    "id": Required[str],
+    "platform": Required[str],
+    "platform_user": Required[str],
+    "user": Required[str],
+    "linked_at": Required[str],
+    "external_id": Required[str],
+    "merged_from": Required[Union[str, None]],
+    "moved": Required[List["MergedUnit"]],
+    },
+)
+
+ClientEventAllow = TypedDict(
+    "ClientEventAllow",
+    {
+    "event": Required[str],
+    "daily_cap": NotRequired[Union[int, None]],
+    "properties": NotRequired[List["ClientEventPropertyRule"]],
+    },
+)
+
+ClientEventPropertyRule = Union["ClientEventPropertyRule1", "ClientEventPropertyRule2", "ClientEventPropertyRule3"]
+
+ClientEventsSetting = TypedDict(
+    "ClientEventsSetting",
+    {
+    "revision": Required[int],
+    "daily_cap_per_person": Required[int],
+    "daily_cap_project": Required[Union[int, None]],
+    "new_people_per_hour": Required[Union[int, None]],
+    "events": Required[List["ClientEventAllow"]],
+    "updated_at": Required[Union[str, None]],
+    "updated_by": Required["MemberRef"],
+    },
+)
+
+ClientEventWarning = TypedDict(
+    "ClientEventWarning",
+    {
+    "code": Required[Literal["no_rule_with_source", "rule_without_source", "server_trigger_name"]],
+    "event": Required[str],
+    "rules": NotRequired[List["RuleRef"]],
+    "message": Required[str],
+    },
+)
+
+Condition = Union["Condition1", "Condition2", "Condition3", "Condition4", "Condition5", "Condition6"]
 
 CreateAgentKeyInput = TypedDict(
     "CreateAgentKeyInput",
@@ -250,6 +462,17 @@ CreateApiKeyInput = TypedDict(
 
 CreateAudienceInput = Union["CreateAudienceInput1", "CreateAudienceInput2"]
 
+CreateChatMirrorInput = TypedDict(
+    "CreateChatMirrorInput",
+    {
+    "installation": Required[str],
+    "unit": Required[str],
+    "threshold": Required[int],
+    "target": Required[str],
+    "label": NotRequired[str],
+    },
+)
+
 CreatedAgentKey = TypedDict(
     "CreatedAgentKey",
     {
@@ -258,6 +481,7 @@ CreatedAgentKey = TypedDict(
     "kind": Required[Literal["agent"]],
     "prefix": Required[str],
     "created_at": Required[str],
+    "created_by": NotRequired[Union["CreatedAgentKeyCreatedBy", None]],
     "last_used_at": Required[Union[str, None]],
     "revoked_at": Required[Union[str, None]],
     "secret": Required[str],
@@ -272,6 +496,7 @@ CreatedApiKey = TypedDict(
     "kind": Required[Literal["secret"]],
     "prefix": Required[str],
     "created_at": Required[str],
+    "created_by": NotRequired[Union["CreatedApiKeyCreatedBy", None]],
     "last_used_at": Required[Union[str, None]],
     "expires_at": Required[Union[str, None]],
     "revoked_at": Required[Union[str, None]],
@@ -313,6 +538,29 @@ CreateExportInput = TypedDict(
     "since": NotRequired[str],
     "until": NotRequired[str],
     "search": NotRequired[str],
+    },
+)
+
+CreateIdentityLinkInput = TypedDict(
+    "CreateIdentityLinkInput",
+    {
+    "platform": Required[str],
+    "platform_user": Required[str],
+    "user": Required[str],
+    },
+)
+
+CreateIdentityLinkOutput = TypedDict(
+    "CreateIdentityLinkOutput",
+    {
+    "id": Required[str],
+    "platform": Required[str],
+    "platform_user": Required[str],
+    "user": Required[str],
+    "linked_at": Required[str],
+    "external_id": Required[str],
+    "merged_from": Required[Union[str, None]],
+    "moved": Required[List["MergedUnit"]],
     },
 )
 
@@ -376,6 +624,15 @@ CreateRuleInput = TypedDict(
     "do": Required[List["Action"]],
     "budget": NotRequired[List["RuleBudget"]],
     "modify": NotRequired[List["Modifier"]],
+    "effects": NotRequired[List["RuleEffect"]],
+    },
+)
+
+CreateTrustedIssuerInput = TypedDict(
+    "CreateTrustedIssuerInput",
+    {
+    "name": Required[str],
+    "profile": Required[Union["CreateTrustedIssuerInputProfile1", "CreateTrustedIssuerInputProfile2", "CreateTrustedIssuerInputProfile3"]],
     },
 )
 
@@ -523,6 +780,15 @@ DeclinedInvite = TypedDict(
     },
 )
 
+DeletedChatMirror = TypedDict(
+    "DeletedChatMirror",
+    {
+    "id": Required[str],
+    "deleted": Required[Literal[True]],
+    "note": Required[str],
+    },
+)
+
 DeletedWebhookEndpoint = TypedDict(
     "DeletedWebhookEndpoint",
     {
@@ -531,11 +797,56 @@ DeletedWebhookEndpoint = TypedDict(
     },
 )
 
+DeleteIdentityLinkOutput = TypedDict(
+    "DeleteIdentityLinkOutput",
+    {
+    "id": Required[str],
+    "deleted": Required[Literal[True]],
+    "block_copied": Required[bool],
+    },
+)
+
 DeleteLurkyConversationOutput = TypedDict(
     "DeleteLurkyConversationOutput",
     {
     "id": Required[str],
     "deleted": Required[Literal[True]],
+    },
+)
+
+DisabledKnownValues = TypedDict(
+    "DisabledKnownValues",
+    {
+    "id": Required[str],
+    "event": Required[str],
+    "property": Required[str],
+    "state": Required[Literal["off"]],
+    "deleted_values": Required[int],
+    },
+)
+
+DisconnectedIntegration = TypedDict(
+    "DisconnectedIntegration",
+    {
+    "id": Required[str],
+    "connector": Required[str],
+    "disconnected": Required[Literal[True]],
+    },
+)
+
+DmEffect = TypedDict(
+    "DmEffect",
+    {
+    "community": Required[str],
+    "text": Required[str],
+    },
+)
+
+EnableKnownValuesInput = TypedDict(
+    "EnableKnownValuesInput",
+    {
+    "event": Required[str],
+    "property": Required[str],
     },
 )
 
@@ -548,6 +859,10 @@ EndUser = TypedDict(
     "last_active_at": Required[Union[str, None]],
     "status": Required["PersonStatus"],
     "balances": Required[List["UnitBalance"]],
+    "profile": Required["PersonProfile"],
+    "blocked_at": Required[Union[str, None]],
+    "blocked_by": Required[Union["EndUserBlockedBy", None]],
+    "erased_at": NotRequired[Union[str, None]],
     },
 )
 
@@ -560,9 +875,42 @@ EndUserDetail = TypedDict(
     "last_active_at": Required[Union[str, None]],
     "status": Required["PersonStatus"],
     "balances": Required[List["UnitBalance"]],
+    "profile": Required["PersonProfile"],
+    "blocked_at": Required[Union[str, None]],
+    "blocked_by": Required[Union["EndUserDetailBlockedBy", None]],
+    "erased_at": NotRequired[Union[str, None]],
     "timezone": Required[Union[str, None]],
     "receipts": Required[int],
     "last_receipt_at": Required[Union[str, None]],
+    },
+)
+
+ErasureDetail = TypedDict(
+    "ErasureDetail",
+    {
+    "id": Required[str],
+    "user": Required[str],
+    "state": Required[Literal["queued", "running", "done", "failed"]],
+    "requested_at": Required[str],
+    "requested_by": Required[str],
+    "phase": Required[int],
+    "people": Required[int],
+    "counts": Required[Dict[str, int]],
+    "finished_at": Required[Union[str, None]],
+    "removed": Required[List[str]],
+    "not_reached": Required[List[str]],
+    "notice": Required[str],
+    },
+)
+
+ErasureRequest = TypedDict(
+    "ErasureRequest",
+    {
+    "id": Required[str],
+    "user": Required[str],
+    "state": Required[Literal["queued", "running", "done", "failed"]],
+    "requested_at": Required[str],
+    "requested_by": Required[str],
     },
 )
 
@@ -629,6 +977,37 @@ ExportJobList = TypedDict(
     },
 )
 
+FeedbackImpact = Literal["blocked", "annoying", "minor"]
+
+FeedbackKind = Literal["bug", "gap", "idea", "docs", "question"]
+
+FeedbackReceipt = TypedDict(
+    "FeedbackReceipt",
+    {
+    "id": Required[str],
+    "status": Required[Literal["received"]],
+    "received_at": Required[str],
+    },
+)
+
+FeedEffect = TypedDict(
+    "FeedEffect",
+    {
+    "kind": Required[Literal["effect"]],
+    "id": Required[str],
+    "at": Required[str],
+    "user": Required[Union["FeedEffectUser", None]],
+    "by": Required[str],
+    "rule": Required["FeedEffectRule"],
+    "event": Required[Union["FeedEffectEvent", None]],
+    "effect": Required[Literal["post", "dm"]],
+    "status": Required[Literal["pending", "held", "sent", "failed", "skipped"]],
+    "firings": Required[int],
+    "summary": Required[str],
+    "detail": Required[Union[str, None]],
+    },
+)
+
 FeedGiven = TypedDict(
     "FeedGiven",
     {
@@ -636,7 +1015,7 @@ FeedGiven = TypedDict(
     "at": Required[str],
     "user": Required["FeedGivenUser"],
     "by": Required[str],
-    "via": Required[Literal["api", "agent", "lurky", "dashboard", "system"]],
+    "via": Required[Literal["api", "agent", "lurky", "dashboard", "system", "chat", "device"]],
     "agent": Required[Union[str, None]],
     "event": Required[Union["FeedGivenEvent", None]],
     "lines": Required[List["ActivityLine"]],
@@ -665,7 +1044,7 @@ FeedHeld = TypedDict(
     },
 )
 
-FeedItem = Union["FeedGiven", "FeedSkipped", "FeedHeld"]
+FeedItem = Union["FeedGiven", "FeedSkipped", "FeedHeld", "FeedEffect", "FeedMirror"]
 
 FeedList = TypedDict(
     "FeedList",
@@ -673,6 +1052,22 @@ FeedList = TypedDict(
     "data": Required[List["FeedItem"]],
     "has_more": Required[bool],
     "next_cursor": Required[Union[str, None]],
+    },
+)
+
+FeedMirror = TypedDict(
+    "FeedMirror",
+    {
+    "kind": Required[Literal["mirror"]],
+    "id": Required[str],
+    "at": Required[str],
+    "user": Required["FeedMirrorUser"],
+    "by": Required[str],
+    "mirror": Required["FeedMirrorMirror"],
+    "connector": Required[str],
+    "action": Required[Literal["given", "taken"]],
+    "summary": Required[str],
+    "detail": Required[Union[str, None]],
     },
 )
 
@@ -738,6 +1133,14 @@ GiveUnitsOutput = TypedDict(
     },
 )
 
+HandleChange = TypedDict(
+    "HandleChange",
+    {
+    "handle": Required[str],
+    "account_id": NotRequired[Union[str, None]],
+    },
+)
+
 Held = TypedDict(
     "Held",
     {
@@ -753,6 +1156,35 @@ HideSuggestionInput = TypedDict(
     {
     "id": Required[str],
     "signature": Required[str],
+    },
+)
+
+HistoryEvent = TypedDict(
+    "HistoryEvent",
+    {
+    "kind": Required[Literal["event"]],
+    "id": Required[str],
+    "name": Required[str],
+    "at": Required[str],
+    "recorded_at": Required[str],
+    "properties": Required[Dict[str, Any]],
+    "source": Required[Literal["trusted", "platform", "untrusted"]],
+    "session": Required[Union[str, None]],
+    "seen_as": Required[Union["HistoryEventSeenAs", None]],
+    },
+)
+
+HistoryItem = Union["HistoryEvent", "HistoryReceipt"]
+
+HistoryReceipt = TypedDict(
+    "HistoryReceipt",
+    {
+    "kind": Required[Literal["receipt"]],
+    "id": Required[str],
+    "at": Required[str],
+    "recorded_at": Required[str],
+    "receipt": Required["ActivityItem"],
+    "seen_as": Required[Union["HistoryReceiptSeenAs", None]],
     },
 )
 
@@ -786,6 +1218,26 @@ HoldList = TypedDict(
 
 HoldStatus = Literal["held", "given", "refused"]
 
+IdentityLink = TypedDict(
+    "IdentityLink",
+    {
+    "id": Required[str],
+    "platform": Required[str],
+    "platform_user": Required[str],
+    "user": Required[str],
+    "linked_at": Required[str],
+    },
+)
+
+IdentityLinkList = TypedDict(
+    "IdentityLinkList",
+    {
+    "data": Required[List["IdentityLink"]],
+    },
+)
+
+IdentityMode = Literal["platform", "linked"]
+
 InstallTemplateOutput = TypedDict(
     "InstallTemplateOutput",
     {
@@ -794,6 +1246,7 @@ InstallTemplateOutput = TypedDict(
     "units": Required[List["InstallTemplateOutputUnitsItem"]],
     "rules": Required[List["InstallTemplateOutputRulesItem"]],
     "views": Required[List["InstallTemplateOutputViewsItem"]],
+    "dashboards": Required[List["InstallTemplateOutputDashboardsItem"]],
     },
 )
 
@@ -808,6 +1261,15 @@ Integration = TypedDict(
     "stat": Required[Union["IntegrationStat", None]],
     "problems": Required[List["IntegrationProblem"]],
     "connected_at": Required[Union[str, None]],
+    },
+)
+
+IntegrationConnectLink = TypedDict(
+    "IntegrationConnectLink",
+    {
+    "url": Required[str],
+    "expires_at": Required[str],
+    "note": Required[str],
     },
 )
 
@@ -829,6 +1291,29 @@ IntegrationHealthOutput = TypedDict(
     },
 )
 
+IntegrationInstallation = TypedDict(
+    "IntegrationInstallation",
+    {
+    "id": Required[str],
+    "connector": Required[str],
+    "workspace_name": Required[Union[str, None]],
+    "status": Required[Literal["connected", "needs_attention"]],
+    "settings": Required["IntegrationSettings"],
+    "health": Required[Union["IntegrationInstallationHealth", None]],
+    "connected_at": Required[str],
+    "state_synced_at": NotRequired[Union[str, None]],
+    },
+)
+
+IntegrationInstallations = TypedDict(
+    "IntegrationInstallations",
+    {
+    "connector": Required[str],
+    "status": Required["IntegrationStatus"],
+    "installations": Required[List["IntegrationInstallation"]],
+    },
+)
+
 IntegrationList = TypedDict(
     "IntegrationList",
     {
@@ -845,6 +1330,24 @@ IntegrationProblem = TypedDict(
     "message": Required[str],
     "fix": Required[Union[str, None]],
     "fix_url": Required[Union[str, None]],
+    },
+)
+
+IntegrationSettings = TypedDict(
+    "IntegrationSettings",
+    {
+    "tip": Required[bool],
+    "announce_tips": Required[bool],
+    "identity": Required["IdentityMode"],
+    },
+)
+
+IntegrationSettingsChange = TypedDict(
+    "IntegrationSettingsChange",
+    {
+    "tip": NotRequired[bool],
+    "announce_tips": NotRequired[bool],
+    "identity": NotRequired[Literal["platform", "linked"]],
     },
 )
 
@@ -871,6 +1374,61 @@ InviteMemberInput = TypedDict(
     "role": Required["AssignableRole"],
     },
 )
+
+IssuerIdentity = TypedDict(
+    "IssuerIdentity",
+    {
+    "id": Required[str],
+    "issuer_id": Required[str],
+    "person_id": Required[str],
+    "origin": Required[Literal["first_sight", "mapping"]],
+    "mapped_by": Required[Union["IssuerIdentityMappedBy", None]],
+    "created_at": Required[str],
+    "last_used_at": Required[Union[str, None]],
+    },
+)
+
+KnownValue = TypedDict(
+    "KnownValue",
+    {
+    "value": Required[str],
+    "type": Required["KnownValueType"],
+    },
+)
+
+KnownValues = TypedDict(
+    "KnownValues",
+    {
+    "values": Required[List["KnownValue"]],
+    },
+)
+
+KnownValuesList = TypedDict(
+    "KnownValuesList",
+    {
+    "data": Required[List["KnownValuesSetting"]],
+    "cap": Required[int],
+    },
+)
+
+KnownValuesSetting = TypedDict(
+    "KnownValuesSetting",
+    {
+    "id": Required[str],
+    "event": Required[str],
+    "property": Required[str],
+    "state": Required[Literal["on", "stopped"]],
+    "values": Required[List["KnownValue"]],
+    "stopped": Required[Union["KnownValuesSettingStopped", None]],
+    "enabled_by": Required[str],
+    "enabled_at": Required[str],
+    "updated_at": Required[str],
+    },
+)
+
+KnownValuesStopReason = Literal["too_many", "too_long", "personal"]
+
+KnownValueType = Literal["text", "number", "yes_no"]
 
 Limit = TypedDict(
     "Limit",
@@ -981,7 +1539,50 @@ MemberList = TypedDict(
     },
 )
 
+MemberRef = TypedDict(
+    "MemberRef",
+    {
+    "id": Required[str],
+    "name": Required[str],
+    },
+)
+
 MemberRole = Literal["owner", "admin", "developer", "viewer"]
+
+MergedPerson = TypedDict(
+    "MergedPerson",
+    {
+    "id": Required[str],
+    "external_id": Required[str],
+    },
+)
+
+MergedUnit = TypedDict(
+    "MergedUnit",
+    {
+    "unit": Required[str],
+    "amount": Required[int],
+    "transfer": Required[str],
+    "receipt": Required[str],
+    },
+)
+
+MergeUsersInput = TypedDict(
+    "MergeUsersInput",
+    {
+    "from": Required[str],
+    "into": Required[str],
+    },
+)
+
+MergeUsersOutput = TypedDict(
+    "MergeUsersOutput",
+    {
+    "from": Required["MergedPerson"],
+    "into": Required["MergedPerson"],
+    "moved": Required[List["MergedUnit"]],
+    },
+)
 
 Modifier = Union["Modifier1", "Modifier2"]
 
@@ -1035,6 +1636,36 @@ Period = TypedDict(
     },
 )
 
+PersonAlias = TypedDict(
+    "PersonAlias",
+    {
+    "user": Required["PersonAliasUser"],
+    "alias": Required[str],
+    "person": Required[Union["PersonAliasPerson", None]],
+    "created_at": Required[str],
+    },
+)
+
+PersonHandle = TypedDict(
+    "PersonHandle",
+    {
+    "handle": Required[str],
+    "account_id": Required[Union[str, None]],
+    },
+)
+
+PersonProfile = TypedDict(
+    "PersonProfile",
+    {
+    "email": Required[Union[str, None]],
+    "name": Required[Union[str, None]],
+    "avatar_url": Required[Union[str, None]],
+    "handles": Required[Dict[str, "PersonHandle"]],
+    "locale": Required[Union[str, None]],
+    "updated_at": Required[Union[str, None]],
+    },
+)
+
 PersonStatus = Literal["new", "returning", "lapsing"]
 
 PlanTemplateOutput = TypedDict(
@@ -1046,6 +1677,39 @@ PlanTemplateOutput = TypedDict(
     "views": Required[List["PlanTemplateOutputViewsItem"]],
     "test_week": Required["PlanTemplateOutputTestWeek"],
     "notes": Required[List[str]],
+    },
+)
+
+PostEffect = TypedDict(
+    "PostEffect",
+    {
+    "community": Required[str],
+    "channel": Required[str],
+    "channel_name": NotRequired[str],
+    "text": Required[str],
+    "every": NotRequired[Literal["hour", "day"]],
+    "max_per_day": NotRequired[int],
+    },
+)
+
+PreviewChatMirrorInput = TypedDict(
+    "PreviewChatMirrorInput",
+    {
+    "id": NotRequired[str],
+    "installation": NotRequired[str],
+    "unit": NotRequired[str],
+    "threshold": NotRequired[int],
+    "target": NotRequired[str],
+    },
+)
+
+PreviewEffect = TypedDict(
+    "PreviewEffect",
+    {
+    "effect": Required[Literal["post", "dm"]],
+    "words": Required[str],
+    "firings": Required[int],
+    "messages": Required[int],
     },
 )
 
@@ -1073,6 +1737,7 @@ PreviewRuleOutput = TypedDict(
     "receipts": Required[int],
     "held": Required[int],
     "given": Required[List["UnitTotal"]],
+    "effects": Required[List["PreviewEffect"]],
     "skipped": Required[List["SkipCount"]],
     "top_users": Required[List["PreviewUserTotal"]],
     "truncated": Required[bool],
@@ -1154,7 +1819,9 @@ PromotionSkipped = TypedDict(
     },
 )
 
-ProposableOperation = Literal["rules.publish", "rules.resume", "units.create", "rules.create", "rules.update"]
+PropertyValueSource = Union["PropertyValueSource1", "PropertyValueSource2", "PropertyValueSource3"]
+
+ProposableOperation = Literal["rules.publish", "rules.resume", "rules.pause", "units.create", "rules.create", "rules.update", "templates.install", "units.give"]
 
 Proposal = TypedDict(
     "Proposal",
@@ -1223,7 +1890,7 @@ Receipt = TypedDict(
     "Receipt",
     {
     "by": Required[str],
-    "via": NotRequired[Literal["api", "agent", "lurky", "dashboard", "system"]],
+    "via": NotRequired[Literal["api", "agent", "lurky", "dashboard", "system", "chat", "device"]],
     "agent": NotRequired[str],
     "unit": Required[str],
     "change": Required[int],
@@ -1307,6 +1974,8 @@ RuleDetail = TypedDict(
     },
 )
 
+RuleEffect = Union["RuleEffect1", "RuleEffect2"]
+
 RuleList = TypedDict(
     "RuleList",
     {
@@ -1338,6 +2007,15 @@ RulePeriod = TypedDict(
     {
     "from": Required[str],
     "to": Required[str],
+    },
+)
+
+RuleRef = TypedDict(
+    "RuleRef",
+    {
+    "id": Required[str],
+    "key": Required[str],
+    "name": Required[str],
     },
 )
 
@@ -1383,6 +2061,8 @@ SendEventInput = TypedDict(
     "properties": NotRequired[Dict[str, Union[str, float, bool, None, List[Union[str, float, bool, None]]]]],
     "idempotency_key": Required[str],
     "timestamp": NotRequired[str],
+    "profile": NotRequired["SendEventInputProfile"],
+    "alias": NotRequired[str],
     },
 )
 
@@ -1395,6 +2075,21 @@ SendEventOutput = TypedDict(
     "receipts": Required[List["Receipt"]],
     "skipped": Required[List["Skipped"]],
     "held": NotRequired[List["Held"]],
+    "alias": NotRequired["SendEventOutputAlias"],
+    },
+)
+
+SendFeedbackInput = TypedDict(
+    "SendFeedbackInput",
+    {
+    "kind": Required["FeedbackKind"],
+    "impact": Required["FeedbackImpact"],
+    "message": Required[str],
+    "operation": NotRequired[str],
+    "request_ids": NotRequired[List[str]],
+    "docs_path": NotRequired[str],
+    "client": NotRequired["SendFeedbackInputClient"],
+    "idempotency_key": Required[str],
     },
 )
 
@@ -1589,11 +2284,36 @@ TemplateSummary = TypedDict(
     },
 )
 
+TestTrustedIssuerOutput = Union["TestTrustedIssuerOutput1", "TestTrustedIssuerOutput2"]
+
+TrustedIssuer = TypedDict(
+    "TrustedIssuer",
+    {
+    "id": Required[str],
+    "name": Required[str],
+    "profile": Required[Union["TrustedIssuerProfile1", "TrustedIssuerProfile2", "TrustedIssuerProfile3"]],
+    "issuer": Required[str],
+    "jwks_url": Required[str],
+    "revision": Required[int],
+    "status": Required[Literal["paused", "active", "archived"]],
+    "created_at": Required[str],
+    "checked_at": Required[Union[str, None]],
+    "last_used_at": Required[Union[str, None]],
+    "key_origin_differs": Required[bool],
+    "key_count": Required[int],
+    "key_ids_hash": Required[Union[str, None]],
+    "algorithms": Required[List[Literal["RS256", "ES256"]]],
+    "problem": Required[Literal["unavailable", "invalid_keys", "no_supported_key", "configuration_changed", None]],
+    "can_activate": Required[bool],
+    },
+)
+
 UndoActivityOutput = TypedDict(
     "UndoActivityOutput",
     {
     "id": Required[str],
     "activity": Required["UndoActivityOutputActivity"],
+    "note": Required[Union[str, None]],
     },
 )
 
@@ -1623,6 +2343,14 @@ UnitBalance = TypedDict(
 )
 
 UnitGroup = Literal["points", "progress", "badge", "perk"]
+
+UnitLeaderboard = TypedDict(
+    "UnitLeaderboard",
+    {
+    "unit": Required["UnitLeaderboardUnit"],
+    "rows": Required[List["UnitLeaderboardRowsItem"]],
+    },
+)
 
 UnitList = TypedDict(
     "UnitList",
@@ -1676,10 +2404,68 @@ UnitTotal = TypedDict(
     },
 )
 
+UnmergeUsersInput = TypedDict(
+    "UnmergeUsersInput",
+    {
+    "user": Required[str],
+    },
+)
+
+UnmergeUsersOutput = TypedDict(
+    "UnmergeUsersOutput",
+    {
+    "user": Required["MergedPerson"],
+    "was_merged_into": Required["UnmergeUsersOutputWasMergedInto"],
+    "moved_back": Required[List["MergedUnit"]],
+    "block_copied": Required[bool],
+    },
+)
+
+UpdateClientEventsInput = TypedDict(
+    "UpdateClientEventsInput",
+    {
+    "expected_revision": Required[int],
+    "daily_cap_per_person": NotRequired[int],
+    "daily_cap_project": NotRequired[Union[int, None]],
+    "new_people_per_hour": NotRequired[Union[int, None]],
+    "events": NotRequired[List["ClientEventAllow"]],
+    },
+)
+
+UpdateClientEventsOutput = TypedDict(
+    "UpdateClientEventsOutput",
+    {
+    "setting": Required["ClientEventsSetting"],
+    "warnings": Required[List["ClientEventWarning"]],
+    },
+)
+
+UpdatedChatSettings = TypedDict(
+    "UpdatedChatSettings",
+    {
+    "installation": Required[str],
+    "connector": Required[str],
+    "workspace_name": Required[Union[str, None]],
+    "listening": Required["ChatListening"],
+    "switches": Required[List["ChatSwitch"]],
+    "id": Required[str],
+    },
+)
+
 UpdateLurkySettingsInput = TypedDict(
     "UpdateLurkySettingsInput",
     {
     "enabled": Required[bool],
+    },
+)
+
+UserHistory = TypedDict(
+    "UserHistory",
+    {
+    "data": Required[List["HistoryItem"]],
+    "has_more": Required[bool],
+    "next_cursor": Required[Union[str, None]],
+    "includes": Required[List["MergedPerson"]],
     },
 )
 
@@ -1754,6 +2540,7 @@ ViewDefinition = TypedDict(
     "what": Required[List["ViewMeasure"]],
     "over": Required["ViewRange"],
     "shape": Required["ViewShape"],
+    "source": NotRequired[Literal["trusted", "platform", "any"]],
     },
 )
 
@@ -1785,6 +2572,7 @@ ViewRow = TypedDict(
     "label": Required[str],
     "user": Required[Union["ViewRowUser", None]],
     "rule": Required[Union["ViewRowRule", None]],
+    "property": Required[Union["ViewRowProperty", None]],
     "value": Required[int],
     "previous_rank": Required[Union[int, None]],
     "values": Required[List[int]],
@@ -1915,10 +2703,55 @@ ActivityItemUser = TypedDict(
     },
 )
 
+AgentKeyCreatedBy = TypedDict(
+    "AgentKeyCreatedBy",
+    {
+    "kind": Required[Literal["member", "former_member", "bootstrap"]],
+    "name": Required[Union[str, None]],
+    },
+)
+
+ApiKeyCreatedBy = TypedDict(
+    "ApiKeyCreatedBy",
+    {
+    "kind": Required[Literal["member", "former_member", "bootstrap"]],
+    "name": Required[Union[str, None]],
+    },
+)
+
 AudienceCondition1 = TypedDict(
     "AudienceCondition1",
     {
     "active": Required["AudienceCondition1Active"],
+    },
+)
+
+AudienceCondition10 = TypedDict(
+    "AudienceCondition10",
+    {
+    "chat_booster": Required["AudienceCondition10ChatBooster"],
+    },
+)
+
+AudienceCondition10ChatBooster = TypedDict(
+    "AudienceCondition10ChatBooster",
+    {
+    "community": Required[str],
+    },
+)
+
+AudienceCondition11 = TypedDict(
+    "AudienceCondition11",
+    {
+    "chat_tenure": Required["AudienceCondition11ChatTenure"],
+    },
+)
+
+AudienceCondition11ChatTenure = TypedDict(
+    "AudienceCondition11ChatTenure",
+    {
+    "community": Required[str],
+    "gte": Required[int],
     },
 )
 
@@ -1990,6 +2823,67 @@ AudienceCondition5PropertyTotal = TypedDict(
     },
 )
 
+AudienceCondition6 = TypedDict(
+    "AudienceCondition6",
+    {
+    "chat_role": Required["AudienceCondition6ChatRole"],
+    },
+)
+
+AudienceCondition6ChatRole = TypedDict(
+    "AudienceCondition6ChatRole",
+    {
+    "community": Required[str],
+    "role": Required[str],
+    "label": NotRequired[str],
+    },
+)
+
+AudienceCondition7 = TypedDict(
+    "AudienceCondition7",
+    {
+    "chat_group": Required["AudienceCondition7ChatGroup"],
+    },
+)
+
+AudienceCondition7ChatGroup = TypedDict(
+    "AudienceCondition7ChatGroup",
+    {
+    "community": Required[str],
+    "group": Required[str],
+    "label": NotRequired[str],
+    },
+)
+
+AudienceCondition8 = TypedDict(
+    "AudienceCondition8",
+    {
+    "chat_tag": Required["AudienceCondition8ChatTag"],
+    },
+)
+
+AudienceCondition8ChatTag = TypedDict(
+    "AudienceCondition8ChatTag",
+    {
+    "community": Required[str],
+    "tag": Required[str],
+    },
+)
+
+AudienceCondition9 = TypedDict(
+    "AudienceCondition9",
+    {
+    "chat_admin": Required["AudienceCondition9ChatAdmin"],
+    },
+)
+
+AudienceCondition9ChatAdmin = TypedDict(
+    "AudienceCondition9ChatAdmin",
+    {
+    "community": Required[str],
+    },
+)
+
 BriefActiveUsers = TypedDict(
     "BriefActiveUsers",
     {
@@ -2043,6 +2937,61 @@ CatalogEventRulesItem = TypedDict(
     },
 )
 
+ChatMirrorCounts = TypedDict(
+    "ChatMirrorCounts",
+    {
+    "wanted": Required[int],
+    "holding": Required[int],
+    "given_by_lurky": Required[int],
+    "unknown_holders": Required[Union[int, None]],
+    "without_account": Required[int],
+    },
+)
+
+ChatMirrorProblem = TypedDict(
+    "ChatMirrorProblem",
+    {
+    "code": Required[str],
+    "message": Required[str],
+    "fix": Required[str],
+    },
+)
+
+ChatMirrorTarget = TypedDict(
+    "ChatMirrorTarget",
+    {
+    "id": Required[str],
+    "label": Required[str],
+    },
+)
+
+ClientEventPropertyRule1 = TypedDict(
+    "ClientEventPropertyRule1",
+    {
+    "name": Required[str],
+    "type": Required[Literal["string"]],
+    "max_length": Required[int],
+    },
+)
+
+ClientEventPropertyRule2 = TypedDict(
+    "ClientEventPropertyRule2",
+    {
+    "name": Required[str],
+    "type": Required[Literal["number"]],
+    "min": Required[float],
+    "max": Required[float],
+    },
+)
+
+ClientEventPropertyRule3 = TypedDict(
+    "ClientEventPropertyRule3",
+    {
+    "name": Required[str],
+    "type": Required[Literal["boolean"]],
+    },
+)
+
 Condition1 = TypedDict(
     "Condition1",
     {
@@ -2082,15 +3031,38 @@ Condition3Property = TypedDict(
 Condition4 = TypedDict(
     "Condition4",
     {
-    "balance": Required["Condition4Balance"],
+    "property_range": Required["Condition4PropertyRange"],
     },
 )
 
-Condition4Balance = TypedDict(
-    "Condition4Balance",
+Condition4PropertyRange = TypedDict(
+    "Condition4PropertyRange",
+    {
+    "name": Required[str],
+    "gte": NotRequired[float],
+    "lte": NotRequired[float],
+    },
+)
+
+Condition5 = TypedDict(
+    "Condition5",
+    {
+    "balance": Required["Condition5Balance"],
+    },
+)
+
+Condition5Balance = TypedDict(
+    "Condition5Balance",
     {
     "unit": Required[str],
     "gte": Required[int],
+    },
+)
+
+Condition6 = TypedDict(
+    "Condition6",
+    {
+    "source": Required[Literal["trusted", "platform", "any"]],
     },
 )
 
@@ -2112,6 +3084,22 @@ CreateAudienceInput2 = TypedDict(
     "description": NotRequired[str],
     "kind": Required[Literal["condition"]],
     "conditions": Required[List["AudienceCondition"]],
+    },
+)
+
+CreatedAgentKeyCreatedBy = TypedDict(
+    "CreatedAgentKeyCreatedBy",
+    {
+    "kind": Required[Literal["member", "former_member", "bootstrap"]],
+    "name": Required[Union[str, None]],
+    },
+)
+
+CreatedApiKeyCreatedBy = TypedDict(
+    "CreatedApiKeyCreatedBy",
+    {
+    "kind": Required[Literal["member", "former_member", "bootstrap"]],
+    "name": Required[Union[str, None]],
     },
 )
 
@@ -2140,6 +3128,40 @@ CreateProposalInputChangesItem = TypedDict(
     {
     "operation": Required["ProposableOperation"],
     "input": Required[Dict[str, Any]],
+    },
+)
+
+CreateTrustedIssuerInputProfile1 = TypedDict(
+    "CreateTrustedIssuerInputProfile1",
+    {
+    "provider": Required[Literal["supabase"]],
+    "project_ref": Required[str],
+    "audiences": NotRequired[List[str]],
+    "algorithms": NotRequired[List[Literal["RS256", "ES256"]]],
+    "max_token_lifetime_seconds": NotRequired[int],
+    },
+)
+
+CreateTrustedIssuerInputProfile2 = TypedDict(
+    "CreateTrustedIssuerInputProfile2",
+    {
+    "provider": Required[Literal["clerk"]],
+    "issuer": Required[str],
+    "authorized_parties": Required[List[str]],
+    "audiences": NotRequired[List[str]],
+    "max_token_lifetime_seconds": NotRequired[int],
+    },
+)
+
+CreateTrustedIssuerInputProfile3 = TypedDict(
+    "CreateTrustedIssuerInputProfile3",
+    {
+    "provider": Required[Literal["oidc"]],
+    "issuer": Required[str],
+    "jwks_url": Required[str],
+    "audiences": Required[List[str]],
+    "algorithms": Required[List[Literal["RS256", "ES256"]]],
+    "max_token_lifetime_seconds": NotRequired[int],
     },
 )
 
@@ -2172,16 +3194,57 @@ DecideProposalOutputAppliedItem = TypedDict(
     },
 )
 
+EndUserBlockedBy = TypedDict(
+    "EndUserBlockedBy",
+    {
+    "id": Required[str],
+    "name": Required[str],
+    },
+)
+
+EndUserDetailBlockedBy = TypedDict(
+    "EndUserDetailBlockedBy",
+    {
+    "id": Required[str],
+    "name": Required[str],
+    },
+)
+
 ErrorBodyError = TypedDict(
     "ErrorBodyError",
     {
     "status": Required[int],
-    "code": Required[Literal["invalid_json", "invalid_key", "forbidden", "approval_required", "not_found", "idempotency_conflict", "insufficient_balance", "reference_used", "validation_failed", "rate_limited", "internal", "unavailable"]],
+    "code": Required[Literal["invalid_json", "invalid_key", "forbidden", "approval_required", "not_found", "idempotency_conflict", "conflict", "insufficient_balance", "reference_used", "validation_failed", "rate_limited", "internal", "unavailable"]],
     "message": Required[str],
     "param": NotRequired[str],
     "next_step": NotRequired[str],
     "request_id": Required[str],
     "doc_url": Required[str],
+    },
+)
+
+FeedEffectEvent = TypedDict(
+    "FeedEffectEvent",
+    {
+    "id": Required[str],
+    "name": Required[str],
+    },
+)
+
+FeedEffectRule = TypedDict(
+    "FeedEffectRule",
+    {
+    "id": Required[str],
+    "key": Required[str],
+    "name": Required[str],
+    },
+)
+
+FeedEffectUser = TypedDict(
+    "FeedEffectUser",
+    {
+    "id": Required[str],
+    "external_id": Required[str],
     },
 )
 
@@ -2228,6 +3291,22 @@ FeedHeldRule = TypedDict(
 
 FeedHeldUser = TypedDict(
     "FeedHeldUser",
+    {
+    "id": Required[str],
+    "external_id": Required[str],
+    },
+)
+
+FeedMirrorMirror = TypedDict(
+    "FeedMirrorMirror",
+    {
+    "id": Required[str],
+    "label": Required[str],
+    },
+)
+
+FeedMirrorUser = TypedDict(
+    "FeedMirrorUser",
     {
     "id": Required[str],
     "external_id": Required[str],
@@ -2333,6 +3412,22 @@ HeldChangesItem = TypedDict(
     },
 )
 
+HistoryEventSeenAs = TypedDict(
+    "HistoryEventSeenAs",
+    {
+    "id": Required[str],
+    "external_id": Required[str],
+    },
+)
+
+HistoryReceiptSeenAs = TypedDict(
+    "HistoryReceiptSeenAs",
+    {
+    "id": Required[str],
+    "external_id": Required[str],
+    },
+)
+
 HoldChangesItem = TypedDict(
     "HoldChangesItem",
     {
@@ -2366,6 +3461,14 @@ HoldUser = TypedDict(
     },
 )
 
+InstallTemplateOutputDashboardsItem = TypedDict(
+    "InstallTemplateOutputDashboardsItem",
+    {
+    "id": Required[str],
+    "name": Required[str],
+    },
+)
+
 InstallTemplateOutputRulesItem = TypedDict(
     "InstallTemplateOutputRulesItem",
     {
@@ -2393,6 +3496,15 @@ InstallTemplateOutputViewsItem = TypedDict(
     },
 )
 
+IntegrationInstallationHealth = TypedDict(
+    "IntegrationInstallationHealth",
+    {
+    "status": Required[Literal["ok", "needs_attention"]],
+    "checked_at": Required[str],
+    "problems": Required[List["IntegrationProblem"]],
+    },
+)
+
 IntegrationStat = TypedDict(
     "IntegrationStat",
     {
@@ -2406,6 +3518,22 @@ InviteInvitedBy = TypedDict(
     {
     "id": Required[str],
     "name": Required[str],
+    },
+)
+
+IssuerIdentityMappedBy = TypedDict(
+    "IssuerIdentityMappedBy",
+    {
+    "id": Required[str],
+    "name": Required[str],
+    },
+)
+
+KnownValuesSettingStopped = TypedDict(
+    "KnownValuesSettingStopped",
+    {
+    "reason": Required["KnownValuesStopReason"],
+    "message": Required[str],
     },
 )
 
@@ -2471,12 +3599,29 @@ MyInviteOrganization = TypedDict(
     },
 )
 
+PersonAliasPerson = TypedDict(
+    "PersonAliasPerson",
+    {
+    "id": Required[str],
+    "external_id": Required[str],
+    },
+)
+
+PersonAliasUser = TypedDict(
+    "PersonAliasUser",
+    {
+    "id": Required[str],
+    "external_id": Required[str],
+    },
+)
+
 PlanTemplateOutputRulesItem = TypedDict(
     "PlanTemplateOutputRulesItem",
     {
     "key": Required[str],
     "name": Required[str],
     "exists": Required[bool],
+    "conflict": Required[bool],
     },
 )
 
@@ -2547,6 +3692,38 @@ PreviewRuleOutputSchedule = TypedDict(
     },
 )
 
+PropertyValueSource1 = TypedDict(
+    "PropertyValueSource1",
+    {
+    "kind": Required[Literal["enum"]],
+    "values": Required[List["PropertyValueSource1ValuesItem"]],
+    },
+)
+
+PropertyValueSource1ValuesItem = TypedDict(
+    "PropertyValueSource1ValuesItem",
+    {
+    "value": Required[str],
+    "label": Required[str],
+    "installed": NotRequired[bool],
+    },
+)
+
+PropertyValueSource2 = TypedDict(
+    "PropertyValueSource2",
+    {
+    "kind": Required[Literal["community"]],
+    },
+)
+
+PropertyValueSource3 = TypedDict(
+    "PropertyValueSource3",
+    {
+    "kind": Required[Literal["channel"]],
+    "community_property": Required[str],
+    },
+)
+
 ProposalCardChangesItem = TypedDict(
     "ProposalCardChangesItem",
     {
@@ -2594,6 +3771,7 @@ RuleDefinition = TypedDict(
     "do": Required[List["Action"]],
     "budget": NotRequired[List["RuleBudget"]],
     "modify": NotRequired[List["Modifier"]],
+    "effects": NotRequired[List["RuleEffect"]],
     },
 )
 
@@ -2606,6 +3784,7 @@ RuleDetailDefinition = TypedDict(
     "do": Required[List["Action"]],
     "budget": NotRequired[List["RuleBudget"]],
     "modify": NotRequired[List["Modifier"]],
+    "effects": NotRequired[List["RuleEffect"]],
     },
 )
 
@@ -2618,6 +3797,21 @@ RuleDetailLiveDefinition = TypedDict(
     "do": Required[List["Action"]],
     "budget": NotRequired[List["RuleBudget"]],
     "modify": NotRequired[List["Modifier"]],
+    "effects": NotRequired[List["RuleEffect"]],
+    },
+)
+
+RuleEffect1 = TypedDict(
+    "RuleEffect1",
+    {
+    "post": Required["PostEffect"],
+    },
+)
+
+RuleEffect2 = TypedDict(
+    "RuleEffect2",
+    {
+    "dm": Required["DmEffect"],
     },
 )
 
@@ -2630,6 +3824,7 @@ RuleListItemDefinition = TypedDict(
     "do": Required[List["Action"]],
     "budget": NotRequired[List["RuleBudget"]],
     "modify": NotRequired[List["Modifier"]],
+    "effects": NotRequired[List["RuleEffect"]],
     },
 )
 
@@ -2660,6 +3855,49 @@ RuleWhen4 = TypedDict(
     {
     "unit": Required[str],
     "every": Required[int],
+    },
+)
+
+SendEventInputProfile = TypedDict(
+    "SendEventInputProfile",
+    {
+    "email": NotRequired[Union[str, None]],
+    "name": NotRequired[Union[str, None]],
+    "avatar_url": NotRequired[Union[str, None]],
+    "handles": NotRequired[Dict[str, "HandleChange"]],
+    "locale": NotRequired[Union[str, None]],
+    },
+)
+
+SendEventOutputAlias = TypedDict(
+    "SendEventOutputAlias",
+    {
+    "made": Required[bool],
+    "reason": NotRequired[str],
+    },
+)
+
+SendFeedbackInputClient = TypedDict(
+    "SendFeedbackInputClient",
+    {
+    "sdk": NotRequired["SendFeedbackInputClientSdk"],
+    "agent": NotRequired["SendFeedbackInputClientAgent"],
+    },
+)
+
+SendFeedbackInputClientAgent = TypedDict(
+    "SendFeedbackInputClientAgent",
+    {
+    "name": Required[str],
+    "version": Required[str],
+    },
+)
+
+SendFeedbackInputClientSdk = TypedDict(
+    "SendFeedbackInputClientSdk",
+    {
+    "name": Required[str],
+    "version": Required[str],
     },
 )
 
@@ -2748,6 +3986,74 @@ TemplateSummaryCounts = TypedDict(
     },
 )
 
+TestTrustedIssuerOutput1 = TypedDict(
+    "TestTrustedIssuerOutput1",
+    {
+    "status": Required[Literal["verified"]],
+    "issuer_id": Required[str],
+    "revision": Required[int],
+    "identity": Required[Union["TestTrustedIssuerOutput1Identity1", "TestTrustedIssuerOutput1Identity2"]],
+    "access": Required[Literal["ready", "issuer_paused", "person_blocked", "not_yet_available"]],
+    },
+)
+
+TestTrustedIssuerOutput1Identity1 = TypedDict(
+    "TestTrustedIssuerOutput1Identity1",
+    {
+    "status": Required[Literal["unlinked"]],
+    },
+)
+
+TestTrustedIssuerOutput1Identity2 = TypedDict(
+    "TestTrustedIssuerOutput1Identity2",
+    {
+    "status": Required[Literal["linked"]],
+    "person_id": Required[str],
+    },
+)
+
+TestTrustedIssuerOutput2 = TypedDict(
+    "TestTrustedIssuerOutput2",
+    {
+    "status": Required[Literal["refused"]],
+    "code": Required[Literal["invalid_token", "wrong_issuer", "wrong_audience", "wrong_authorized_party", "pending_session", "anonymous_session", "expired", "lifetime_exceeded", "unsupported_algorithm", "unavailable", "configuration_changed"]],
+    },
+)
+
+TrustedIssuerProfile1 = TypedDict(
+    "TrustedIssuerProfile1",
+    {
+    "provider": Required[Literal["supabase"]],
+    "project_ref": Required[str],
+    "audiences": NotRequired[List[str]],
+    "algorithms": NotRequired[List[Literal["RS256", "ES256"]]],
+    "max_token_lifetime_seconds": NotRequired[int],
+    },
+)
+
+TrustedIssuerProfile2 = TypedDict(
+    "TrustedIssuerProfile2",
+    {
+    "provider": Required[Literal["clerk"]],
+    "issuer": Required[str],
+    "authorized_parties": Required[List[str]],
+    "audiences": NotRequired[List[str]],
+    "max_token_lifetime_seconds": NotRequired[int],
+    },
+)
+
+TrustedIssuerProfile3 = TypedDict(
+    "TrustedIssuerProfile3",
+    {
+    "provider": Required[Literal["oidc"]],
+    "issuer": Required[str],
+    "jwks_url": Required[str],
+    "audiences": Required[List[str]],
+    "algorithms": Required[List[Literal["RS256", "ES256"]]],
+    "max_token_lifetime_seconds": NotRequired[int],
+    },
+)
+
 UndoActivityOutputActivity = TypedDict(
     "UndoActivityOutputActivity",
     {
@@ -2755,7 +4061,7 @@ UndoActivityOutputActivity = TypedDict(
     "at": Required[str],
     "user": Required["UndoActivityOutputActivityUser"],
     "by": Required[str],
-    "via": Required[Literal["api", "agent", "lurky", "dashboard", "system"]],
+    "via": Required[Literal["api", "agent", "lurky", "dashboard", "system", "chat", "device"]],
     "agent": Required[Union[str, None]],
     "event": Required[Union["UndoActivityOutputActivityEvent", None]],
     "lines": Required[List["ActivityLine"]],
@@ -2784,6 +4090,23 @@ UndoActivityOutputActivityUser = TypedDict(
     },
 )
 
+UnitLeaderboardRowsItem = TypedDict(
+    "UnitLeaderboardRowsItem",
+    {
+    "rank": Required[int],
+    "user": Required[str],
+    "amount": Required[int],
+    },
+)
+
+UnitLeaderboardUnit = TypedDict(
+    "UnitLeaderboardUnit",
+    {
+    "key": Required[str],
+    "name": Required[str],
+    },
+)
+
 UnitListCounts = TypedDict(
     "UnitListCounts",
     {
@@ -2792,6 +4115,14 @@ UnitListCounts = TypedDict(
     "progress": Required[int],
     "badge": Required[int],
     "perk": Required[int],
+    },
+)
+
+UnmergeUsersOutputWasMergedInto = TypedDict(
+    "UnmergeUsersOutputWasMergedInto",
+    {
+    "id": Required[str],
+    "external_id": Required[str],
     },
 )
 
@@ -2834,6 +4165,13 @@ ViewMeasure3 = TypedDict(
     },
 )
 
+ViewRowProperty = TypedDict(
+    "ViewRowProperty",
+    {
+    "value": Required[Union[str, None]],
+    },
+)
+
 ViewRowRule = TypedDict(
     "ViewRowRule",
     {
@@ -2870,7 +4208,8 @@ ViewShape3 = TypedDict(
     "ViewShape3",
     {
     "type": Required[Literal["list"]],
-    "by": Required[Literal["user", "rule"]],
+    "by": Required[Literal["user", "rule", "property"]],
+    "property": NotRequired[str],
     "size": Required[int],
     },
 )

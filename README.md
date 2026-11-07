@@ -1,4 +1,4 @@
-# lurk (Python SDK)
+# getlurk (Python SDK)
 
 The official Lurk API client for Python 3.11 and newer, with no dependencies.
 
@@ -36,5 +36,5 @@ Only the latest major version receives fixes.
 
 ## Help
 
-Open an [issue](https://github.com/getlurk/lurk-sdk-py/issues) (never include a key; the `request_id` of an error is enough), or read
+To tell the Lurk team about a bug, a gap or an idea in Lurk itself, use `lurk.feedback.send` ([Send feedback](https://docs.getlurk.com/guides/send-feedback)). Never include a key or your users' data. Lurk staff read it before it is shared in their tracker, and no reply is promised. You can also open an [issue](https://github.com/getlurk/lurk-sdk-py/issues) (never include a key; the `request_id` of an error is enough), or read
 [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Licensed under the Apache License 2.0 (see [LICENSE](LICENSE) and [NOTICE](NOTICE)).
